@@ -1,0 +1,14 @@
+[NetDev]
+Name=wgfv
+Kind=wireguard
+Description=Footovision VPN Client
+
+[WireGuard]
+PrivateKeyFile=/etc/systemd/network/{{ wireguard_interface_name }}.key
+ListenPort={{ wireguard_port }}
+
+[WireGuardPeer]
+PublicKey={{ Publickey_wgserver }}
+AllowedIPs=0.0.0.0/0
+Endpoint={{ wireguard_endpoint }}:{{ wireguard_port }}
+PersistentKeepalive=25

@@ -1,0 +1,45 @@
+- name: Deploy Wireguard
+  vars:
+    server_key_dir: "../../repositories/server-keys"
+  block:
+    - name: Install dependencies for Debian
+      ansible.builtin.apt:
+        name:
+          - wireguard-tools
+        state: present
+
+    - name: Read the configuration file content
+      ansible.builtin.set_fact:
+        file_content: "{{ lookup('file', server_key_dir + '/wireguard/' + inventory_hostname + '.yml') }}"
+
+    - name: Parse the configuration file content
+      ansible.builtin.set_fact:
+        config_data: "{{ file_content | from_yaml }}"
+
+    - name: Extract Address and PublicKey
+      ansible.builtin.set_fact:
+        Address: "{{ config_data.Address }}"
+        public_key: "{{ config_data.PublicKey }}"
+
+    - name: Include server tasks
+      ansible.builtin.include_tasks: server.yml
+      when: ansible_hostname == wg_hostname
+
+    - name: Include client tasks
+      ansible.builtin.include_tasks: client.yml
+      when: ansible_hostname != wg_hostname
+
+    - name: Set up wireguard network configuration
+      ansible.builtin.template:
+        src: wireguard.network
+        dest: /etc/systemd/network/40-wireguard.network
+        owner: root
+        group: root
+        mode: '644'
+      notify: "restart systemd-networkd"
+
+    - name: Allow Wireguard in UFW
+      community.general.ufw:
+        rule: allow
+        port: 51820
+        proto: udp

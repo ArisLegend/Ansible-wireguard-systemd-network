@@ -1,0 +1,53 @@
+- name: Wireguard Key Generator
+  hosts: all
+  vars:
+    server_key_dir: "../../repositories/server-keys"
+  tasks:
+    - name: Install dependencies for Debian
+      ansible.builtin.apt:
+        name:
+          - wireguard-tools
+        state: present
+
+    - name: Generate a private key
+      ansible.builtin.shell: |
+        wg genkey > {{ wireguard_interface_name }}.key
+        chmod 640 {{ wireguard_interface_name }}.key
+        chown root:systemd-network /etc/systemd/network/{{ wireguard_interface_name }}.key
+      args:
+        chdir: /etc/systemd/network/
+        creates: "/etc/systemd/network/{{ wireguard_interface_name }}.key"
+
+    - name: Generate a public key
+      ansible.builtin.shell: |
+        wg pubkey < {{ wireguard_interface_name }}.key > {{ wireguard_interface_name }}.pub
+        chmod 755 {{ wireguard_interface_name }}.pub
+      args:
+        chdir: /etc/systemd/network/
+        creates: "/etc/systemd/network/{{ wireguard_interface_name }}.pub"
+
+    - name: Get the public key
+      ansible.builtin.shell: cat {{ wireguard_interface_name }}.pub
+      args:
+        chdir: /etc/systemd/network/
+      register: wg_pub
+      changed_when: false
+
+    - name: Add or update public key in the file on the container
+      ansible.builtin.lineinfile:
+        path: "{{ server_key_dir }}/wireguard/{{ inventory_hostname }}.yml"
+        regexp: '^PublicKey:'
+        line: 'PublicKey: "{{ wg_pub.stdout }}"'
+        state: present
+      delegate_to: localhost
+
+    - name: Change directory to the server keys repository
+      ansible.builtin.shell: |
+        git pull origin main &&
+        git add wireguard/ &&
+        git commit -a "Update WireGuard keys" &&
+        git push origin main
+      args:
+        chdir: "{{ server_key_dir }}"
+      delegate_to: localhost
+      run_once: true

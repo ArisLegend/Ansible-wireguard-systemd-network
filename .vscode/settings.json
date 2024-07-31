@@ -1,0 +1,5 @@
+{
+    "files.associations": {
+        "**/*.yml": "ansible"},
+      "ansible.python.interpreterPath": "/bin/python3"
+}

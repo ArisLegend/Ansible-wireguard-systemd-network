@@ -1,0 +1,8 @@
+[Match]
+Name=wgfv
+
+[Network]
+Address={{ Address }}/24
+DNS={{ wireguard_dns }}
+IPForward=True
+IPMasquerade=True

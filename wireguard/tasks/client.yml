@@ -1,0 +1,20 @@
+---
+- name: Set up wireguard client network device
+  ansible.builtin.template:
+    src: wireguard.netdev
+    dest: /etc/systemd/network/40-wireguard.netdev
+    owner: root
+    group: systemd-network
+    mode: '640'
+  notify: "restart systemd-networkd"
+
+- name: Update the configuration of the central WireGuard server
+  ansible.builtin.blockinfile:
+    path: /etc/systemd/network/40-wireguard.netdev
+    marker: " \n ----------- # {mark} {{ inventory_hostname | upper }} # -----------"
+    block: |
+      [WireGuardPeer]
+      PublicKey= {{ public_key }}
+      AllowedIPs= {{ Address }}
+  delegate_to: "{{ wg_hostname }}"
+  notify: "restart systemd-networkd"

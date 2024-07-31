@@ -1,0 +1,19 @@
+---
+- name: Set up wireguard server network device
+  ansible.builtin.blockinfile:
+    path: /etc/systemd/network/40-wireguard.netdev
+    marker: "# {mark} SERVER #"
+    block: |
+      [NetDev]
+      Name=wgfv
+      Kind=wireguard
+      Description=Footovision VPN Controller
+
+      [WireGuard]
+      ListenPort=51820
+      PrivateKeyFile=/etc/systemd/network/wgfv.key
+    create: true
+    owner: root
+    group: systemd-network
+    mode: '640'
+  notify: "restart systemd-networkd"
