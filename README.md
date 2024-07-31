@@ -47,7 +47,7 @@ graph TD;
 
 ## Description
 
-Ce projet contient les scripts et les rôles nécessaires pour configurer et gérer un serveur WireGuard.
+Ce projet contient les scripts nécessaires pour configurer et gérer un serveur WireGuard en utilisant systemd-networkd.
 
 ## Prérequis
 
